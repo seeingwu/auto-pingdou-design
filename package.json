@@ -1,0 +1,62 @@
+{
+  "name": "auto-pingdou-design",
+  "version": "0.1.0",
+  "description": "拼豆设计图自动生成器桌面版",
+  "author": "Antigravity",
+  "private": true,
+  "main": "main.js",
+  "build": {
+    "appId": "com.pingdou.design",
+    "productName": "拼豆设计图",
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/icons/icon-512x512.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/icons/icon-512x512.png"
+    },
+    "files": [
+      "out/**/*",
+      "main.js"
+    ]
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "build:electron:mac": "BUILD_ELECTRON=true npm run build && electron-builder --mac",
+    "build:electron:win": "BUILD_ELECTRON=true npm run build && electron-builder --win",
+    "electron": "electron ."
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
+    "@ducanh2912/next-pwa": "^10.2.9",
+    "jspdf": "^4.2.0",
+    "lucide-react": "^0.575.0",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "electron-serve": "^3.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.1.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "electron": "^40.6.1",
+    "electron-builder": "^26.8.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "javascript-obfuscator": "^5.3.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "webpack-obfuscator": "^3.6.0"
+  }
+}
