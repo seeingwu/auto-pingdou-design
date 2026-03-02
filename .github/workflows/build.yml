@@ -9,13 +9,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-electron:
-    name: Build Electron (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
-
+  build-windows:
+    name: Build Windows (.exe)
+    runs-on: windows-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -29,34 +25,59 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Build Next.js (Static Export)
+      - name: Build Next.js
         run: npm run build
         env:
           BUILD_ELECTRON: true
         shell: bash
 
-      - name: Build Electron App
-        run: |
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            npm run build:electron:win
-          else
-            npm run build:electron:mac
-          fi
+      - name: Build Windows App
+        run: npm run build:electron:win
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Electron Artifact
+      - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: electron-app-${{ matrix.os }}
-          path: release/*.zip, release/*.exe, release/*.dmg
-          if-no-files-found: ignore
+          name: pingdou-windows-exe
+          path: release/*.exe
+
+  build-macos:
+    name: Build macOS (.dmg)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Next.js
+        run: npm run build
+        env:
+          BUILD_ELECTRON: true
+
+      - name: Build macOS App
+        run: npm run build:electron:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pingdou-macos-dmg
+          path: release/*.dmg
 
   build-android:
     name: Build Android APK
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -76,7 +97,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Build Next.js (Static Export)
+      - name: Build Next.js
         run: npm run build
 
       - name: Initial Capacitor Sync
@@ -91,5 +112,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: pingdou-android-debug-apk
+          name: pingdou-android-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
