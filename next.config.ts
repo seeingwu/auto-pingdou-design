@@ -11,7 +11,7 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   /* config options here */
-  output: isElectron ? "export" : undefined,
+  output: "export",
   images: {
     unoptimized: true,
   },

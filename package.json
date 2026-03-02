@@ -20,8 +20,9 @@
       "icon": "public/icons/icon-512x512.png"
     },
     "files": [
-      "out/**/*",
-      "main.js"
+      "out",
+      "main.js",
+      "package.json"
     ]
   },
   "scripts": {
