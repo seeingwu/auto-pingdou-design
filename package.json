@@ -30,20 +30,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "build:electron:mac": "BUILD_ELECTRON=true npm run build && electron-builder --mac",
-    "build:electron:win": "BUILD_ELECTRON=true npm run build && electron-builder --win",
+    "build:electron:mac": "cross-env BUILD_ELECTRON=true npm run build && electron-builder --mac",
+    "build:electron:win": "cross-env BUILD_ELECTRON=true npm run build && electron-builder --win",
     "electron": "electron ."
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",
     "@capacitor/core": "^8.1.0",
     "@ducanh2912/next-pwa": "^10.2.9",
+    "electron-serve": "^3.0.1",
     "jspdf": "^4.2.0",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "electron-serve": "^3.0.1"
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.1.0",
@@ -51,6 +51,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "electron": "^40.6.1",
     "electron-builder": "^26.8.1",
     "eslint": "^9",
