@@ -223,47 +223,68 @@ export default function BeadCanvas({
         { id: 'fill', icon: PaintBucket, label: '填充' },
     ] as const;
 
-    const canvasW = Math.min(grid.cols * CELL * zoom + Math.abs(offset.x) + 200, 10000);
-    const canvasH = Math.min(grid.rows * CELL * zoom + Math.abs(offset.y) + 200, 10000);
+    const handleTouchStart = (e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            button: 0
+        });
+        handleMouseDown(mouseEvent as any);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (e.touches.length > 0) {
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            handleMouseMove(mouseEvent as any);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        handleMouseUp();
+    };
 
     return (
-        <div className="flex flex-col h-full gap-3">
+        <div className="flex flex-col h-full gap-2 sm:gap-3">
             {/* Toolbar */}
-            <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1 bg-slate-800/80 rounded-xl p-1 border border-white/10">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-h-0 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
+                <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-800/80 rounded-xl p-0.5 sm:p-1 border border-white/10 flex-shrink-0">
                     {tools.map((t) => (
                         <button
                             key={t.id}
                             onClick={() => setMode(t.id)}
                             title={t.label}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${mode === t.id ? 'bg-violet-600 text-white shadow' : 'text-slate-400 hover:text-white hover:bg-white/10'
+                            className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all duration-200 ${mode === t.id ? 'bg-violet-600 text-white shadow' : 'text-slate-400 hover:text-white hover:bg-white/10'
                                 }`}
                         >
-                            <t.icon size={13} />
+                            <t.icon size={12} className="sm:size-[13px]" />
                             <span className="hidden sm:inline">{t.label}</span>
                         </button>
                     ))}
                 </div>
 
                 {/* Zoom */}
-                <div className="flex items-center gap-1 bg-slate-800/80 rounded-xl p-1 border border-white/10">
-                    <button onClick={() => setZoom(z => Math.max(MIN_ZOOM, z * 0.85))} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all">
-                        <ZoomOut size={14} />
+                <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-800/80 rounded-xl p-0.5 sm:p-1 border border-white/10 flex-shrink-0">
+                    <button onClick={() => setZoom(z => Math.max(MIN_ZOOM, z * 0.85))} className="p-1 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                        <ZoomOut size={12} className="sm:size-[14px]" />
                     </button>
-                    <span className="text-xs text-slate-300 min-w-[3rem] text-center">{Math.round(zoom * 100)}%</span>
-                    <button onClick={() => setZoom(z => Math.min(MAX_ZOOM, z * 1.18))} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all">
-                        <ZoomIn size={14} />
+                    <span className="text-[10px] sm:text-xs text-slate-300 min-w-[2.2rem] sm:min-w-[3rem] text-center">{Math.round(zoom * 100)}%</span>
+                    <button onClick={() => setZoom(z => Math.min(MAX_ZOOM, z * 1.18))} className="p-1 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                        <ZoomIn size={12} className="sm:size-[14px]" />
                     </button>
                 </div>
 
                 {/* BG Mode */}
-                <div className="flex items-center gap-1 bg-slate-800/80 rounded-xl p-1 border border-white/10">
+                <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-800/80 rounded-xl p-0.5 sm:p-1 border border-white/10 flex-shrink-0">
                     {(['dark', 'light', 'board'] as const).map((b) => (
                         <button
                             key={b}
                             onClick={() => setBgMode(b)}
-                            title={`切换${b === 'dark' ? '深色' : b === 'light' ? '浅色' : '钉板'}背景`}
-                            className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${bgMode === b ? 'bg-white/20 text-white' : 'text-slate-500 hover:text-slate-300'
+                            className={`px-1.5 sm:px-2 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold transition-all ${bgMode === b ? 'bg-white/20 text-white' : 'text-slate-500 hover:text-slate-300'
                                 }`}
                         >
                             {b.toUpperCase().charAt(0)}
@@ -271,29 +292,24 @@ export default function BeadCanvas({
                     ))}
                 </div>
 
-                <button onClick={resetView} className="p-2 rounded-xl bg-slate-800/80 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
-                    <RotateCcw size={14} />
+                <button onClick={resetView} className="p-1.5 sm:p-2 rounded-xl bg-slate-800/80 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                    <RotateCcw size={12} className="sm:size-[14px]" />
                 </button>
 
-                {/* Color picker interaction helper */}
                 {highlightColorId && (
                     <button
                         onClick={() => setHighlightColorId(null)}
-                        className="px-3 py-1.5 text-xs bg-violet-500/20 border border-violet-500/40 text-violet-300 rounded-xl hover:bg-violet-500/30 transition-all"
+                        className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs bg-violet-500/20 border border-violet-500/40 text-violet-300 rounded-xl hover:bg-violet-500/30 transition-all"
                     >
-                        取消高亮
+                        取消
                     </button>
                 )}
-
-                <div className="ml-auto text-xs text-slate-500">
-                    {grid.cols} × {grid.rows} 格
-                </div>
             </div>
 
             {/* Canvas */}
             <div
                 ref={containerRef}
-                className="relative flex-1 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 min-h-0"
+                className="relative flex-1 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 min-h-0 touch-none"
                 style={{ cursor: mode === 'select' ? 'grab' : mode === 'paint' ? 'crosshair' : mode === 'erase' ? 'cell' : mode === 'eyedropper' ? 'copy' : 'crosshair' }}
             >
                 <canvas
@@ -304,6 +320,9 @@ export default function BeadCanvas({
                     onMouseMove={handleMouseMove}
                     onMouseDown={handleMouseDown}
                     onMouseUp={handleMouseUp}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                     onMouseLeave={() => { setTooltip(null); handleMouseUp(); }}
                     onWheel={handleWheel}
                 />
@@ -318,7 +337,7 @@ export default function BeadCanvas({
                     <span className="w-4 h-4 rounded-full border border-white/20 flex-shrink-0" style={{ background: tooltip.color.hex }} />
                     <div>
                         <div className="text-white font-semibold">{tooltip.color.nameZh}</div>
-                        <div className="text-slate-400">{tooltip.color.id} · {tooltip.color.hex}</div>
+                        <div className="text-[10px] text-slate-400">{tooltip.color.id}</div>
                     </div>
                 </div>
             )}
