@@ -29,7 +29,7 @@ export async function imageToBeadGrid(
     const data = imageData.data;
 
     if (edgeEnhance) {
-        applySharpenBase(imageData, cols, rows);
+        applySharpenBase(imageData, cols, rows, 1.2); // Increased strength
     }
 
     if (removeBackground) {
@@ -43,7 +43,7 @@ export async function imageToBeadGrid(
     const errG = new Float32Array(cols * rows);
     const errB = new Float32Array(cols * rows);
 
-    const cells: (BeadColor | null)[][] = [];
+    let cells: (BeadColor | null)[][] = [];
 
     for (let y = 0; y < rows; y++) {
         const row: (BeadColor | null)[] = [];
@@ -54,7 +54,7 @@ export async function imageToBeadGrid(
             const b = data[idx + 2];
             const a = data[idx + 3];
 
-            if (a < 10) {
+            if (a < 128) { // More strict alpha threshold
                 row.push(null);
                 continue;
             }
@@ -76,13 +76,17 @@ export async function imageToBeadGrid(
                 const qeR = pr - nr;
                 const qeG = pg - ng;
                 const qeB = pb - nb;
-                // Floyd-Steinberg distribution
+
+                // Adjust dithering strength based on grid size
+                // Smaller grids get less dithering to avoid "salt & pepper" noise
+                const ditherStrength = Math.min(1.0, Math.max(0.4, (cols * rows) / (60 * 60)));
+
                 const spread = (xi: number, yi: number, factor: number) => {
                     if (xi >= 0 && xi < cols && yi >= 0 && yi < rows) {
                         const i = yi * cols + xi;
-                        errR[i] += qeR * factor;
-                        errG[i] += qeG * factor;
-                        errB[i] += qeB * factor;
+                        errR[i] += qeR * factor * ditherStrength;
+                        errG[i] += qeG * factor * ditherStrength;
+                        errB[i] += qeB * factor * ditherStrength;
                     }
                 };
                 spread(x + 1, y, 7 / 16);
@@ -96,6 +100,10 @@ export async function imageToBeadGrid(
         cells.push(row);
     }
 
+    // NEW: Apply Morphological Despeckle Filter
+    // This removes isolated pixels ("salt and pepper" noise)
+    cells = applyDespeckle(cells, cols, rows);
+
     // Optional: limit distinct colors
     if (maxColors > 0 && maxColors < palette.length) {
         const limited = limitColors(cells, palette, maxColors, quantizer);
@@ -103,6 +111,55 @@ export async function imageToBeadGrid(
     }
 
     return { cols, rows, cells };
+}
+
+/**
+ * Removes isolated 1x1 pixels by replacing them with the dominant color of their neighbors.
+ * This simulates the "ironing" process where small details merge.
+ */
+function applyDespeckle(cells: (BeadColor | null)[][], cols: number, rows: number): (BeadColor | null)[][] {
+    const newCells = cells.map(row => [...row]);
+
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            const current = cells[y][x];
+            if (!current) continue;
+
+            const neighbors: Map<string, { color: BeadColor, count: number }> = new Map();
+            let differentNeighbors = 0;
+            let totalNeighbors = 0;
+
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+                        totalNeighbors++;
+                        const nab = cells[ny][nx];
+                        if (nab) {
+                            if (nab.id !== current.id) {
+                                differentNeighbors++;
+                                const entry = neighbors.get(nab.id) || { color: nab, count: 0 };
+                                entry.count++;
+                                neighbors.set(nab.id, entry);
+                            }
+                        } else {
+                            differentNeighbors++;
+                        }
+                    }
+                }
+            }
+
+            // If an island (all neighbors are different or null)
+            if (differentNeighbors === totalNeighbors && neighbors.size > 0) {
+                // Pick the most common neighbor color
+                const sorted = Array.from(neighbors.values()).sort((a, b) => b.count - a.count);
+                newCells[y][x] = sorted[0].color;
+            }
+        }
+    }
+    return newCells;
 }
 
 export async function imageFromUrl(url: string, options: ProcessOptions): Promise<BeadGrid> {
@@ -125,11 +182,11 @@ function loadImage(file: File): Promise<HTMLImageElement> {
     });
 }
 
-function applySharpenBase(imageData: ImageData, w: number, h: number) {
+function applySharpenBase(imageData: ImageData, w: number, h: number, strength: number = 1.0) {
     const kernel = [
-        0, -1, 0,
-        -1, 5, -1,
-        0, -1, 0
+        0, -1 * strength, 0,
+        -1 * strength, 1 + 4 * strength, -1 * strength,
+        0, -1 * strength, 0
     ];
     const side = Math.round(Math.sqrt(kernel.length));
     const halfSide = Math.floor(side / 2);
